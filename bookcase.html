@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>bookcase</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #label {
+            position: absolute;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            line-height: 1;
+            border-radius: 5px;
+        }
+    </style>
+
+
+    <script src="libs/raycastertouch_libs/build/three-r100.js"></script>
+    <script src="libs/raycastertouch_libs/jquery-1.9.1.js"></script>
+    <script src="libs/raycastertouch_libs/Detector.js"></script>
+    <script src="libs/raycastertouch_libs/controls/TrackballControls.js"></script>
+    <script src="libs/raycastertouch_libs/controls/OrbitControls.js"></script>
+    <script src="libs/raycastertouch_libs/controls/OrthographicTrackballControls.js"></script>
+    <script src="libs/raycastertouch_libs/libs/dat.gui.min.js"></script>
+    <script src="libs/raycastertouch_libs/libs/stats.min.js"></script>
+    <script src="libs/raycastertouch_libs/loader/DDSLoader.js"></script>
+    <script src="libs/raycastertouch_libs/loader/MTLLoader.js"></script>
+    <script src="libs/raycastertouch_libs/loader/OBJLoader.js"></script>
+
+    
+
+</head>
+<body>
+<div id="WebGL-output"></div>
+<div id="Stats-output"></div>
+
+<div id="label"></div>
+<script>
+
+    var booksMtl=[{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book2.mtl","link_url":"goods.html"},{"materials":"book2.mtl","link_url":"goods.html"},{"materials":"book2.mtl","link_url":"goods.html"},{"materials":"book2.mtl","link_url":"goods.html"},{"materials":"book2.mtl","link_url":"goods.html"},{"materials":"book2.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book2.mtl","link_url":"goods.html"},{"materials":"book2.mtl","link_url":"goods.html"},{"materials":"book2.mtl","link_url":"goods.html"},{"materials":"book2.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"},{"materials":"book01.mtl","link_url":"goods.html"}];
+    var number=0;
+    var changeMaterialNumber=0;
+    var stats = initStats();
+    var scene, camera, renderer, controls, light, selectObject;
+
+    // 场景
+    function initScene() {
+        scene = new THREE.Scene();
+    }
+
+    // 相机
+    function initCamera() {
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
+        camera.position.set(0, 10, 75);
+        // camera.position.set(0, 400, 600);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+    }
+
+    // 渲染器
+    function initRenderer() {
+        if (Detector.webgl) {
+            renderer = new THREE.WebGLRenderer({antialias: true});
+        } else {
+            renderer = new THREE.CanvasRenderer();
+        }
+        // renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x666666);
+        document.body.appendChild(renderer.domElement);
+    }
+
+    // 初始化模型
+    function initContent() {
+
+        // model
+
+        var cubeGeometry = new THREE.BoxGeometry(10, 10, 0.1);
+        var cubeMaterial = new THREE.MeshPhongMaterial( { map: THREE.ImageUtils.loadTexture('images/next.jpg') } );
+        var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        cube.position.set(30, 0, 1);
+        cube.rotation.y=0*Math.PI;
+        cube.name = "next";
+        scene.add(cube);
+
+        var onProgress = function ( xhr ) {
+
+            if ( xhr.lengthComputable ) {
+
+                var percentComplete = xhr.loaded / xhr.total * 100;
+                console.log( Math.round( percentComplete, 2 ) + '% downloaded' );
+
+            }
+
+        };
+
+        var onError = function () { };
+
+        THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+
+        new THREE.MTLLoader()
+            .setPath( 'assets/models/' )
+            .load( 'bookcase.mtl', function ( materials ) {
+
+                materials.preload();
+
+                new THREE.OBJLoader()
+                    .setMaterials( materials )
+                    .setPath( 'assets/models/' )
+                    .load( 'bookcase.obj', function ( object ) {
+
+                        object.scale.set(1,1,1);
+                        object.rotation.x = 0;
+                        object.rotation.y = 0;
+                        object.position.y=-14;
+            // object.position.x=1;
+            // object.position.z=1;
+                        object.name="bookcase0";
+                        scene.add( object );
+
+                    }, onProgress, onError );
+
+            } );
+
+//-----------------------------------书本放置-------------------------------------------------------
+
+        new THREE.MTLLoader()
+            .setPath( 'assets/models/' )
+            .load( booksMtl[5].materials, function ( materials ) {
+
+                materials.preload();
+
+                new THREE.OBJLoader()
+                    .setMaterials( materials )
+                    .setPath( 'assets/models/' )
+                    .load( 'book01.obj', function ( object ) {
+
+                        object.scale.set(1.5,1.5,1.5);
+                        object.rotation.x = 0.45*Math.PI;
+                        object.rotation.z = -0.1*Math.PI;
+                        object.position.z=15;
+                        object.position.x=12;
+                        object.position.y=-7.5;
+                        object.children[0].name="book06";
+                        scene.add( object );
+
+                    }, onProgress, onError );
+
+            } );
+
+        new THREE.MTLLoader()
+            .setPath( 'assets/models/' )
+            .load( booksMtl[4].materials, function ( materials ) {
+
+                materials.preload();
+
+                new THREE.OBJLoader()
+                    .setMaterials( materials )
+                    .setPath( 'assets/models/' )
+                    .load( 'book01.obj', function ( object ) {
+
+                        object.scale.set(1.5,1.5,1.5);
+                        object.rotation.x = 0.45*Math.PI;
+                        object.position.z=15;
+                        object.position.x=0;
+                        object.position.y=-7.5;
+                        object.children[0].name="book05";
+                        scene.add( object );
+
+                    }, onProgress, onError );
+
+            } );
+        
+        new THREE.MTLLoader()
+            .setPath( 'assets/models/' )
+            .load( booksMtl[3].materials, function ( materials ) {
+
+                materials.preload();
+
+                new THREE.OBJLoader()
+                    .setMaterials( materials )
+                    .setPath( 'assets/models/' )
+                    .load( 'book01.obj', function ( object ) {
+
+                        object.scale.set(1.5,1.5,1.5);
+                        object.rotation.x = 0.45*Math.PI;
+                        object.rotation.z = 0.1*Math.PI;
+                        object.position.z=15;
+                        object.position.x=-12;
+                        object.position.y=-7.5;
+                        object.children[0].name="book04";
+                        scene.add( object );
+
+                    }, onProgress, onError );
+
+            } );
+
+        new THREE.MTLLoader()
+            .setPath( 'assets/models/' )
+            .load( booksMtl[2].materials, function ( materials ) {
+
+                materials.preload();
+
+                new THREE.OBJLoader()
+                    .setMaterials( materials )
+                    .setPath( 'assets/models/' )
+                    .load( 'book01.obj', function ( object ) {
+
+                        object.scale.set(1.5,1.5,1.5);
+                        object.rotation.x = 0.45*Math.PI;
+                        object.rotation.z = -0.1*Math.PI;
+                        object.position.z=15;
+                        object.position.x=12;
+                        object.position.y=8;
+                        object.children[0].name="book03";
+                        scene.add( object );
+
+                    }, onProgress, onError );
+
+            } );
+
+        new THREE.MTLLoader()
+            .setPath( 'assets/models/' )
+            .load( booksMtl[1].materials, function ( materials ) {
+
+                materials.preload();
+
+                new THREE.OBJLoader()
+                    .setMaterials( materials )
+                    .setPath( 'assets/models/' )
+                    .load( 'book01.obj', function ( object ) {
+
+                        object.scale.set(1.5,1.5,1.5);
+                        object.rotation.x = 0.45*Math.PI;
+                        object.position.z=15;
+                        object.position.x=0;
+                        object.position.y=8;
+                        object.children[0].name="book02";
+                        scene.add( object );
+
+                    }, onProgress, onError );
+
+            } );
+
+        new THREE.MTLLoader()
+            .setPath( 'assets/models/' )
+            .load( booksMtl[0].materials, function ( materials ) {
+
+                materials.preload();
+
+                new THREE.OBJLoader()
+                    .setMaterials( materials )
+                    .setPath( 'assets/models/' )
+                    .load( 'book01.obj', function ( object ) {
+
+                        object.scale.set(1.5,1.5,1.5);
+                        object.rotation.x = 0.45*Math.PI;
+                        object.rotation.z = 0.1*Math.PI;
+                        object.position.z=15;
+                        object.position.x=-12;
+                        object.position.y=8;
+                        object.children[0].name="book01";
+                        scene.add( object );
+
+                    }, onProgress, onError );
+
+            } );
+        
+//-----------------------------------书本放置结束-------------------------------
+    }
+
+    // 鼠标双击触发的方法
+    function onMouseDblclick(event) {
+
+        // 获取 raycaster 和所有模型相交的数组，其中的元素按照距离排序，越近的越靠前
+        var intersects = getIntersects(event);
+
+        // 获取选中最近的 Mesh 对象
+        if (intersects.length !== 0&& intersects[0].object instanceof THREE.Mesh ) {
+            selectObject = intersects[0].object;
+            // changeMaterial(selectObject);
+            gotoGoods(selectObject);
+            // console.log(intersects);
+        } else {
+            // alert("未选中 Mesh!");
+            // console.log(intersects);
+        }
+    }
+
+    // 获取与射线相交的对象数组
+    function getIntersects(event) {
+        event.preventDefault();
+        console.log("event.clientX:"+event.clientX);
+        console.log("event.clientY:"+event.clientY);
+
+        // 声明 raycaster 和 mouse 变量
+        var raycaster = new THREE.Raycaster();
+        var mouse = new THREE.Vector2();
+
+        // 通过鼠标点击位置,计算出 raycaster 所需点的位置,以屏幕为中心点,范围 -1 到 1
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        //通过鼠标点击的位置(二维坐标)和当前相机的矩阵计算出射线位置
+        raycaster.setFromCamera(mouse, camera);
+
+        // 获取与射线相交的对象数组，其中的元素按照距离排序，越近的越靠前
+        var intersects = raycaster.intersectObjects(scene.children,true);
+
+        //返回选中的对象
+        return intersects;
+    }
+
+    // 窗口变动触发的方法
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // 键盘按下触发的方法
+    function onKeyDown(event) {
+        switch (event.keyCode) {
+            case 13:
+                initCamera();
+                initControls();
+                break;
+        }
+    }
+
+    // 改变对象材质属性
+    function changeMaterial(object,i) {
+        var onProgress = function ( xhr ) {
+            if ( xhr.lengthComputable ) {
+                var percentComplete = xhr.loaded / xhr.total * 100;
+                console.log( Math.round( percentComplete, 2 ) + '% downloaded' );
+            }
+        };
+        var onError = function () { };
+        var oldObject=object.parent;
+        if(changeMaterialNumber==0){
+            new THREE.MTLLoader()
+                .setPath( 'assets/models/' )
+                .load( booksMtl[number*6+i-1].materials, function ( materials ) {
+                    materials.preload();
+                    new THREE.OBJLoader()
+                        .setMaterials( materials )
+                        .setPath( 'assets/models/' )
+                        .load( 'book01.obj', function ( object ) {
+                            object.scale.set(1.5,1.5,1.5);
+                            object.rotation.x = oldObject.rotation.x;
+                            object.rotation.z = oldObject.rotation.z;
+                            object.position.z=oldObject.position.z;
+                            object.position.x=oldObject.position.x;
+                            object.position.y=oldObject.position.y;
+                            object.children[0].name=oldObject.children[0].name;
+                            scene.add( object );
+
+                        }, onProgress, onError );
+                } );
+        }
+        else if (changeMaterialNumber==1) {
+            new THREE.MTLLoader()
+                .setPath( 'assets/models/' )
+                .load( booksMtl[number*6+6-i].materials, function ( materials ) {
+                    materials.preload();
+                    new THREE.OBJLoader()
+                        .setMaterials( materials )
+                        .setPath( 'assets/models/' )
+                        .load( 'book01.obj', function ( object ) {
+                            object.scale.set(1.5,1.5,1.5);
+                            object.rotation.x = oldObject.rotation.x;
+                            object.rotation.z = oldObject.rotation.z;
+                            object.position.z=oldObject.position.z;
+                            object.position.x=oldObject.position.x;
+                            object.position.y=oldObject.position.y;
+                            object.children[0].name=oldObject.children[0].name;
+                            scene.add( object );
+
+                        }, onProgress, onError );
+                } );
+        }
+        scene.remove(oldObject);
+    }
+
+    // 初始化轨迹球控件
+    function initControls() {
+        // controls = new THREE.TrackballControls(camera, renderer.domElement);
+        // controls.noRotate = true;
+        // controls.noPan = true;
+    }
+
+    // 初始化灯光
+    function initLight() {
+        // light = new THREE.SpotLight(0xffffff);
+        // light.position.set(-300, 600, -400);
+        // light.castShadow = true;
+
+        // scene.add(light);
+        // scene.add(new THREE.AmbientLight(0x5C5C5C));
+
+        var spotLight2 = new THREE.SpotLight(0xffffff);
+        spotLight2.position.set(-25, -25, 60);
+        spotLight2.intensity = 0.8;
+        scene.add(spotLight2);
+
+        var spotLight3 = new THREE.SpotLight(0xffffff);
+        spotLight3.position.set(25, 25, 60);
+        spotLight3.intensity = 0.8;
+        scene.add(spotLight3);
+
+        var spotLight4 = new THREE.SpotLight(0xffffff);
+        spotLight4.position.set(25, -25, 60);
+        spotLight4.intensity = 0.8;
+        scene.add(spotLight4);
+
+        var spotLight5 = new THREE.SpotLight(0xffffff);
+        spotLight5.position.set(-25, 25, 60);
+        spotLight5.intensity = 0.8;
+        scene.add(spotLight5);
+    }
+
+    // 初始化 dat.GUI
+    function initGui() {
+        // // 保存需要修改相关数据的对象
+        // gui = new function () {
+
+        // }
+        // // 属性添加到控件
+        // var guiControls = new dat.GUI();
+    }
+
+    // 初始化性能插件
+    function initStats() {
+        var stats = new Stats();
+
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+
+        document.body.appendChild(stats.domElement);
+        return stats;
+    }
+
+    // 更新div的位置
+    function renderDiv(object) {
+        // 获取窗口的一半高度和宽度
+        let halfWidth = window.innerWidth / 2;
+        let halfHeight = window.innerHeight / 2;
+
+        // 逆转相机求出二维坐标
+        let vector = object.position.clone().project(camera);
+
+        // 修改 div 的位置
+        $("#label").css({
+            left: vector.x * halfWidth + halfWidth,
+            top: -vector.y * halfHeight + halfHeight - object.position.y
+        });
+        // 显示模型信息
+        $("#label").text("name:" + object.name);
+    }
+
+    //跳转网页
+    function gotoGoods(object) {
+        var goods_name=object.name;
+        switch(goods_name){
+            case "book01":
+            //     new THREE.MTLLoader()
+            //         .setPath( 'assets/models/' )
+            //         .load( booksMtl[0].materials, function ( materials ) {
+
+            //             materials.preload();
+            //             // console.log(materials);
+            //             console.log(materials.materials);
+            //             var ueue=Object.values(materials.materials);
+            //             console.log(ueue);
+            //             object.material=ueue;
+            // } );
+            //     console.log(object.material);
+
+                window.open(booksMtl[number*6].link_url+"?materials="+booksMtl[number*6].materials);
+                break;
+            case "book02":
+                window.open(booksMtl[number*6+1].link_url+"?materials="+booksMtl[number*6+1].materials);
+                break;
+            case "book03":
+                window.open(booksMtl[number*6+2].link_url+"?materials="+booksMtl[number*6+2].materials);
+                break;
+            case "book04":
+                window.open(booksMtl[number*6+3].link_url+"?materials="+booksMtl[number*6+3].materials);
+                break;
+            case "book05":
+                window.open(booksMtl[number*6+4].link_url+"?materials="+booksMtl[number*6+4].materials);
+                break;
+            case "book06":
+                window.open(booksMtl[number*6+5].link_url+"?materials="+booksMtl[number*6+5].materials);
+                break;
+            case "next":
+                // changeMaterial();
+                console.log("changeMaterial");
+                if(number==booksMtl.length/6-1){
+                    number=0;
+                }else{
+                    number++;
+                }
+                var allChildren = scene.children;
+                for (var i = 1; i<7; i++) {
+                    console.log(i);
+                    var lastObject = allChildren[allChildren.length-1];
+                    if(lastObject){
+                        changeMaterial(lastObject.children[0],i);
+                    }
+                }
+                if(changeMaterialNumber==0){changeMaterialNumber=1;}
+                else if(changeMaterialNumber==1){changeMaterialNumber=0;}
+                break;
+        }
+    }
+
+    // 更新控件
+    function update() {
+        stats.update();
+        // controls.update();
+        // controls.handleResize();
+    }
+
+    // 初始化
+    function init() {
+        initScene();
+        initCamera();
+        initRenderer();
+        
+        initLight();
+        initContent();
+        initControls();
+        initGui();
+        addEventListener('click', onMouseDblclick, false);
+        addEventListener('resize', onWindowResize, false);
+        addEventListener('keydown', onKeyDown, false);
+    }
+
+    function animate() {
+        if (selectObject != undefined && selectObject != null) {
+            //renderDiv(selectObject);
+        }
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+        update();
+    }
+
+    init();
+    animate();
+
+</script>
+</body>
+</html>
